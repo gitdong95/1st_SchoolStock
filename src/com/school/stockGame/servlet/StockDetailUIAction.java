@@ -25,11 +25,12 @@ public class StockDetailUIAction implements Action {
 
 		try {
 			StockDetailDAOInterface stockDetailDAO = new StockDetailDAOMybatis();
-			int stockNo = Integer.parseInt(request.getParameter("no"));
+			int stockNo = Integer.parseInt(request.getParameter("stockNo"));
 			Map<String, Object> stockInfo = stockDetailDAO.getStockInfo(stockNo);
 			Map<String, Object> pubInfo = stockDetailDAO.getStockPubInfo(stockNo);
 			
-			int nowPrice = stockDetailDAO.getStockPrice(stockNo);
+			int nowPrice = 0;
+			nowPrice = stockDetailDAO.getStockPrice(stockNo);
 			
 			// MyBatis에서 반환된 Map은 값의 타입이 Number(BigDecimal 등)일 수 있으므로 
 			// Number로 먼저 캐스팅한 후 intValue()를 호출하여 안전하게 변환합니다.
