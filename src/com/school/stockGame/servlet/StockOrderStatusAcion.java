@@ -29,7 +29,7 @@ public class StockOrderStatusAcion implements Action {
 		StockDetailDAOInterface stockDetailDAO = new StockDetailDAOMybatis();
 		List<OrderVO> list = null;
 		
-		int stockNo = Integer.parseInt(request.getParameter("stockNo"));
+		int stockNo = Integer.parseInt(request.getParameter("no"));
 		if(request.getParameter("type").equals("sell")){
 			list = stockDetailDAO.getTotalSellOrder(stockNo);
 		}else{

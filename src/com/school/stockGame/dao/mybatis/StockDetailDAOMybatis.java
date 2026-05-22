@@ -102,6 +102,7 @@ public class StockDetailDAOMybatis implements StockDetailDAOInterface {
 		SqlSession session = null;
 		try {
 			session = DBCPMybatis.getSqlSessionFactory().openSession();
+			session.getConfiguration().setJdbcTypeForNull(org.apache.ibatis.type.JdbcType.NULL);
 
 			//학생이 주문 요청한 가격보다 보유포인트가 적을때 실행
 			Integer point = session.selectOne("stockDetailMapper.getStudentPoint", studentId);
@@ -131,7 +132,12 @@ public class StockDetailDAOMybatis implements StockDetailDAOInterface {
 					buyOrder.put("stockNo", stockNo);
 					session.insert("stockDetailMapper.setOrderRequest", buyOrder);
 
-					Integer buyOrderNo = session.selectOne("stockDetailMapper.getMyOrderNo", buyOrder);
+					List<Integer> buyOrderNos = session.selectList("stockDetailMapper.getMyOrderNo", buyOrder);
+
+					Integer buyOrderNo = null;
+					if (buyOrderNos != null && !buyOrderNos.isEmpty()) {
+					    buyOrderNo = buyOrderNos.get(0); 
+					}
 
 					Map<String, Object> transactionMap = new HashMap<String, Object>();
 					transactionMap.put("buyOrderNo", buyOrderNo);
@@ -139,7 +145,7 @@ public class StockDetailDAOMybatis implements StockDetailDAOInterface {
 					session.insert("stockDetailMapper.setMatchedOrder", transactionMap);
 
 					session.update("stockDetailMapper.setStockPubBalance", buyOrder);
-					buyOrder.put("totalPoint", pubPrice * pubAmount);
+					buyOrder.put("totalPoint", pubPrice * buyAmount);
 					session.update("stockDetailMapper.setStudentPointDown", buyOrder);
 
 					session.commit();
@@ -183,7 +189,7 @@ public class StockDetailDAOMybatis implements StockDetailDAOInterface {
 				transactionVO.setSellOrderNo(sellOrderNo);
 				session.insert("stockDetailMapper.setMatchedOrder", transactionVO);
 				
-				buyRequest.put("totalPoint", pubPrice * pubAmount);
+				buyRequest.put("totalPoint", buyPrice * buyAmount);
 				session.update("stockDetailMapper.setStudentPointDown", buyRequest);
 				
 				OrderVO pointUp = new OrderVO();
@@ -204,7 +210,7 @@ public class StockDetailDAOMybatis implements StockDetailDAOInterface {
 				buyRequest.put("stockNo", stockNo);
 				session.insert("stockDetailMapper.setOrderRequest", buyRequest);
 				
-				buyRequest.put("totalPoint", pubPrice * pubAmount);
+				buyRequest.put("totalPoint", buyPrice * buyAmount);
 				session.update("stockDetailMapper.setStudentPointDown", buyRequest);
 				
 				session.commit();
