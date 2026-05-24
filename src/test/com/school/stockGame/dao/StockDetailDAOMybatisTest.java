@@ -360,7 +360,7 @@ public class StockDetailDAOMybatisTest {
 		Map<String, Object> emptyPubMap = dao.getStockPubInfo(invalidStockNo);
 
 		assertNotNull(pubMap);
-		assertTrue(pubMap.containsKey("PUBLICATION_BALANCE"));
+		assertTrue(pubMap.containsKey("pubAmount"));
 		assertNull(emptyPubMap);
 	}
 	

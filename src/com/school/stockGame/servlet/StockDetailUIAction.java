@@ -25,7 +25,7 @@ public class StockDetailUIAction implements Action {
 
 		try {
 			StockDetailDAOInterface stockDetailDAO = new StockDetailDAOMybatis();
-			int stockNo = Integer.parseInt(request.getParameter("stockNo"));
+			int stockNo = Integer.parseInt(request.getParameter("no"));
 			Map<String, Object> stockInfo = stockDetailDAO.getStockInfo(stockNo);
 			Map<String, Object> pubInfo = stockDetailDAO.getStockPubInfo(stockNo);
 			
