@@ -1,7 +1,7 @@
 # SchoolStock — 학교 모의 주식투자 플랫폼
 
 학생이 포인트로 주식을 사고팔며 투자를 배우는 웹 애플리케이션입니다.
-**프레임워크 없이 Servlet/JSP만으로 MVC2 구조와 디자인 패턴을 직접 구현했습니다.**
+**Servlet/JSP로 MVC Model 2 구조 + 디자인패턴**
 
 ![Java](https://img.shields.io/badge/Java-007396?style=flat-square&logo=openjdk&logoColor=white)
 ![Servlet/JSP](https://img.shields.io/badge/Servlet%2FJSP-CC0000?style=flat-square)
@@ -13,18 +13,27 @@
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
 ![JUnit](https://img.shields.io/badge/JUnit-4-25A162?style=flat-square)
 
-> 팀 프로젝트의 포크입니다.
-> 원본 · [Inhwa1003/1st_SchoolStock](https://github.com/Inhwa1003/1st_SchoolStock)
-> 내 작업 · [PR 17건](https://github.com/Inhwa1003/1st_SchoolStock/pulls?q=is%3Apr+author%3Agitdong95) · [커밋](https://github.com/Inhwa1003/1st_SchoolStock/commits/default?author=gitdong95)
-
-![주식 상세 화면](docs/images/screenshot-stock-detail.png)
-
-*주식 상세 — 호가(등록된 주문 현황) · 내 주문 관리 · 매수/매도 요청*
+<table>
+<tr valign="top">
+<td width="50%">
 
 | 브랜치 | 내용 |
 |---|---|
 | [`sprint1-jdbc`](../../tree/sprint1-jdbc) | 1차 스프린트 완성본 · 순수 JDBC |
 | [`main`](../../tree/main) | 리팩토링 완료본 · MyBatis 전환 |
+
+</td>
+<td width="50%">
+
+| 구분 | 원본 저장소 |
+|---|---|
+| 저장소 | [Inhwa1003/1st_SchoolStock](https://github.com/Inhwa1003/1st_SchoolStock) |
+| 내 PR | [17건](https://github.com/Inhwa1003/1st_SchoolStock/pulls?q=is%3Apr+author%3Agitdong95) |
+| 내 커밋 | [필터](https://github.com/Inhwa1003/1st_SchoolStock/commits/default?author=gitdong95) |
+
+</td>
+</tr>
+</table>
 
 ---
 
