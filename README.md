@@ -299,7 +299,8 @@ git clone https://github.com/gitdong95/1st_SchoolStock.git
 |---|---|---|
 | 1 | [`db/schema.sql`](db/schema.sql) | 테이블 8개 · PK · FK |
 | 2 | [`db/sequences.sql`](db/sequences.sql) | 시퀀스 7개 |
-| 3 | [`db/data-news.sql`](db/data-news.sql) | 뉴스 더미 데이터 |
+| 3 | [`db/data.sql`](db/data.sql) | 학생 8명 · 종목 10개 · 쿠폰 3개 |
+| 4 | [`db/data-news.sql`](db/data-news.sql) | 뉴스 더미 데이터 |
 
 > `sequences.sql` 에는 `CREATE` 와 `DROP` 이 함께 들어 있습니다. **`CREATE` 부분만 실행하세요.**
 > 팀 작업 당시 쓰던 스크립트를 그대로 옮긴 것이라 재실행용 `DROP` 이 아래에 붙어 있습니다.
@@ -312,6 +313,13 @@ git clone https://github.com/gitdong95/1st_SchoolStock.git
 | `src/config/mybatis-Config.xml` | MyBatis URL · 계정 |
 
 **3. 실행** — Tomcat 배포 후 `http://localhost:5432/StockGame/`
+
+**시연 계정** — `kjw050101` / `1234` (학생 8명 모두 비밀번호 동일)
+
+종목마다 발행잔량이 10주씩 있습니다. 매수하면 **발행가로 즉시 체결**되고, 10주가 소진되면 그때부터 **학생 간 거래**가 열립니다 ([5번](#5-핵심-구현--매수--매도) 참조).
+
+> 보유 주식을 담는 테이블이 없습니다. 보유 수량은 체결된 주문의 `매수 − 매도` 합계로 계산되므로,
+> 초기 데이터로 주식을 미리 쥐여줄 수 없고 반드시 매수를 거쳐야 합니다.
 
 ---
 
