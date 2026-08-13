@@ -1,0 +1,80 @@
+@startuml class-refactor
+left to right direction
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 18
+skinparam ranksep 45
+skinparam ArrowColor #616161
+skinparam ArrowFontColor #616161
+skinparam ArrowFontSize 11
+skinparam class {
+  BorderColor #9E9E9E
+  BackgroundColor #FAFAFA
+  BackgroundColor<<Singleton>> #FFF3E0
+  BorderColor<<Singleton>> #E68A00
+}
+hide empty members
+title 리팩토링 — DAO 인터페이스 도입 · MyBatis 전환 (StockDetail)
+
+package servlet {
+  class "매수·매도 Action 2개" as TxActions #E8F5E9 {
+    + execute(req) : String
+  }
+  class "조회 Action 4개" as ReadActions #E8F5E9 {
+    + execute(req) : String
+  }
+  class "미전환 Action 5개" as LegacyActions {
+    + execute(req) : String
+  }
+}
+
+package dao {
+  interface StockDetailDAOInterface {
+    + setBuyOrder(..) : String
+    + setSellOrder(..) : String
+    + getStockPubInfo(stockNo) : Map
+    + setMatchedOrder(buyNo, sellNo) : boolean
+  }
+}
+
+package "dao.jdbc" as pkgJdbc {
+  class StockDetailDAOJdbc
+  class DBCP <<Singleton>> {
+    - {static} dbcp : DBCP
+    - DBCP()
+    + {static} getConnection() : Connection
+  }
+}
+
+package "dao.mybatis" as pkgMybatis {
+  class StockDetailDAOMybatis #E8F5E9
+  class DBCPMybatis <<Singleton>> {
+    - {static} dbcp : DBCPMybatis
+    - {static} factory : SqlSessionFactory
+    - DBCPMybatis()
+    + {static} getSqlSessionFactory() : SqlSessionFactory
+  }
+}
+
+package config {
+  class "mybatis-Config.xml" as Cfg <<artifact>>
+  class "stockDetailMapper.xml" as Mapper <<artifact>>
+}
+hide <<artifact>> circle
+hide <<artifact>> stereotype
+
+TxActions -[hidden]left- ReadActions
+ReadActions -[hidden]left- LegacyActions
+
+TxActions   --> StockDetailDAOInterface
+ReadActions --> StockDetailDAOInterface
+LegacyActions --> StockDetailDAOJdbc
+
+StockDetailDAOInterface -[hidden]-> StockDetailDAOJdbc
+StockDetailDAOInterface <|.. StockDetailDAOMybatis
+
+StockDetailDAOMybatis -down-> DBCPMybatis
+StockDetailDAOJdbc -down-> DBCP
+DBCPMybatis ..> Cfg
+Cfg .left.> Mapper
+@enduml

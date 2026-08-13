@@ -1,0 +1,87 @@
+@startuml class-sprint1
+left to right direction
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 18
+skinparam ranksep 45
+skinparam ArrowColor #616161
+skinparam ArrowFontColor #616161
+skinparam ArrowFontSize 11
+skinparam class {
+  BorderColor #9E9E9E
+  BackgroundColor #FAFAFA
+  BackgroundColor<<Servlet>> #E3F2FD
+  BorderColor<<Servlet>> #1976D2
+  BackgroundColor<<Factory>> #FFF3E0
+  BorderColor<<Factory>> #E68A00
+  BackgroundColor<<Command>> #FFF3E0
+  BorderColor<<Command>> #E68A00
+  BackgroundColor<<Singleton>> #FFF3E0
+  BorderColor<<Singleton>> #E68A00
+}
+hide empty members
+title 1차 스프린트 — 매수/매도 핵심 클래스 (JDBC)
+
+package servlet {
+  class FrontControllerServlet <<Servlet>> {
+    # service(req, res) : void
+  }
+  class ActionFactory <<Factory>> {
+    + {static} getAction(cmd) : Action
+  }
+  interface Action <<Command>> {
+    + execute(req) : String
+  }
+  class StockBuyAction {
+    + execute(req) : String
+  }
+  class StockSellAction {
+    + execute(req) : String
+  }
+}
+
+package dao {
+  class StockDetailDAO {
+    + setBuyOrder(..) : String
+    + setSellOrder(..) : String
+    + getStockPubInfo(stockNo) : Map
+    + getStockPubInfo(conn, stockNo) : Map
+    + setMatchedOrder(buyNo, sellNo) : boolean
+    + setMatchedOrder(conn, buyNo, sellNo) : boolean
+  }
+  class DBCP <<Singleton>> {
+    - {static} dbcp : DBCP
+    - DBCP()
+    + {static} getConnection() : Connection
+  }
+}
+
+package query {
+  interface StockDetailQuery {
+    + {static} MATCH_ORDER_SQL : String
+    + {static} ORDER_REQUEST : String
+  }
+}
+
+FrontControllerServlet -down-> ActionFactory : cmd
+ActionFactory ..> Action : creates
+Action <|.. StockBuyAction
+Action <|.. StockSellAction
+StockBuyAction  --> StockDetailDAO
+StockSellAction --> StockDetailDAO
+StockDetailDAO -down-> DBCP : getConnection()
+StockDetailDAO .left.> StockDetailQuery
+
+note bottom of StockDetailDAO
+  서비스 계층이 없어 트랜잭션 경계를 DAO가 직접 관리
+  (setAutoCommit / commit / rollback).
+  기존 메서드를 쓰는 팀원을 위해 Connection 오버로딩 12쌍 추가
+  → 메서드 37개
+end note
+
+note bottom of DBCP
+  이름은 Connection Pool이지만
+  매번 DriverManager.getConnection() 호출.
+  실제 풀링은 없다.
+end note
+@enduml

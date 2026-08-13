@@ -1,2 +1,332 @@
-# SchoolStock
+# SchoolStock — 학교 모의 주식투자 플랫폼
 
+학생이 포인트로 주식을 사고팔며 투자를 배우는 웹 애플리케이션입니다.
+**프레임워크 없이 Servlet/JSP만으로 MVC2 구조와 디자인 패턴을 직접 구현했습니다.**
+
+![Java](https://img.shields.io/badge/Java-007396?style=flat-square&logo=openjdk&logoColor=white)
+![Servlet/JSP](https://img.shields.io/badge/Servlet%2FJSP-CC0000?style=flat-square)
+![JSTL](https://img.shields.io/badge/JSTL-1.2-6DB33F?style=flat-square)
+![Oracle](https://img.shields.io/badge/Oracle_XE-F80000?style=flat-square&logo=oracle&logoColor=white)
+![MyBatis](https://img.shields.io/badge/MyBatis-3.2.3-000000?style=flat-square)
+![Tomcat](https://img.shields.io/badge/Tomcat-F8DC75?style=flat-square&logo=apachetomcat&logoColor=black)
+![jQuery](https://img.shields.io/badge/jQuery-0769AD?style=flat-square&logo=jquery&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+![JUnit](https://img.shields.io/badge/JUnit-25A162?style=flat-square&logo=junit5&logoColor=white)
+
+> 팀 프로젝트의 포크입니다.
+> 원본 · [Inhwa1003/1st_SchoolStock](https://github.com/Inhwa1003/1st_SchoolStock)
+> 내 작업 · [PR 17건](https://github.com/Inhwa1003/1st_SchoolStock/pulls?q=is%3Apr+author%3Agitdong95) · [커밋](https://github.com/Inhwa1003/1st_SchoolStock/commits/default?author=gitdong95)
+
+![주식 상세 화면](docs/images/screenshot-stock-detail.png)
+
+*주식 상세 — 호가(등록된 주문 현황) · 내 주문 관리 · 매수/매도 요청*
+
+| 브랜치 | 내용 | 커밋 |
+|---|---|---|
+| [`sprint1-jdbc`](../../tree/sprint1-jdbc) | 1차 스프린트 완성본 · 순수 JDBC | 87 |
+| [`main`](../../tree/main) | 리팩토링 완료본 · MyBatis 전환 | 176 |
+
+---
+
+## 1. 프로젝트 개요
+
+| | |
+|---|---|
+| 1차 스프린트 | 2026-04-13 ~ 05-04 · 4명 |
+| 리팩토링 | 2026-05-04 ~ 05-24 · 3명 |
+| 내 담당 | 주식 상세 — 매수·매도 체결, 주문 상태 관리 |
+
+학교가 학생에게 포인트를 지급하고, 학생은 그 포인트로 모의 주식을 거래합니다.
+선생님은 주식을 발행·관리하고 학생 자산을 조회합니다.
+
+---
+
+## 2. 주요 기능
+
+| 도메인 | 기능 |
+|---|---|
+| **주식 상세** | **매수·매도 주문, 체결/대기/취소, 호가 조회, 내 주문 관리** |
+| 주식 목록 | 시세 조회, 등락률, 폴링 갱신 |
+| 회원 | 회원가입, 로그인, 중복 확인 |
+| 내 자산 | 보유 주식·포인트 조회 |
+| 쿠폰 | 쿠폰 상점, 구매, 사용 |
+| 포인트 내역 | 지급 내역 조회 |
+| 뉴스 | 종목 뉴스 조회 |
+
+굵게 표시한 주식 상세가 제 담당 범위입니다.
+
+---
+
+## 3. 아키텍처 — 프레임워크 없는 MVC2
+
+![아키텍처](docs/images/architecture-sprint1.png)
+
+Spring 없이 Servlet API만으로 Model 2 구조를 세우고, 디자인 패턴 셋을 적용했습니다.
+
+| 패턴 | 적용 위치 | 역할 |
+|---|---|---|
+| **Command** | `Action` 인터페이스 + 구현체 **23개** | 요청 하나 = 클래스 하나. `execute(req)` 한 메서드로 통일 |
+| **Factory** | `ActionFactory` | `cmd` 파라미터로 실행할 `Action`을 생성. 분기 23건이 이 한 곳에 모임 |
+| **Singleton** | `DBCP` · `DBCPMybatis` | 커넥션 획득 지점을 하나로 고정 |
+
+```
+요청  →  FrontControllerServlet  →  ActionFactory  →  Action 23개 중 하나
+                                                          │
+                                                          ├─→  DAO  →  DBCP  →  Oracle
+                                                          │
+                                                          └─→  JSP (View)
+```
+
+**서블릿을 기능마다 만들지 않았습니다.** 진입점은 `FrontControllerServlet` 하나이고, 무엇을 실행할지는 `ActionFactory`가 정합니다. 기능을 추가할 때 손대는 곳은 `Action` 구현체 하나와 `ActionFactory`의 `case` 한 줄뿐입니다.
+
+---
+
+## 4. 데이터 모델
+
+![ERD](docs/images/erd.png)
+
+| 테이블 | 역할 |
+|---|---|
+| `students` | 학생 · 보유 포인트 · 보유 쿠폰 수 |
+| `stocks` | 종목 · 발행가 · 발행잔량 · 이전가격 |
+| `orders` | 주문 요청 (매수/매도 · 대기/체결/취소) |
+| `transaction` | 체결 내역 (매수주문번호 ↔ 매도주문번호) |
+| `coupons` · `coupon_purchase` | 쿠폰 · 구매 내역 |
+| `news` | 종목 뉴스 |
+| `get_point` | 포인트 지급 내역 |
+
+`orders`는 **주문 요청**, `transaction`은 **체결된 거래**입니다. 주문이 반드시 체결되는 것이 아니어서 분리했습니다.
+
+---
+
+## 5. 핵심 구현 — 매수 / 매도
+
+![매수 워크플로우](docs/images/buy-workflow.png)
+
+### 체결 규칙 — 3단계 분기
+
+```
+1. 발행잔량이 남아 있는가?
+     예 · 주문가 ≥ 발행가   →  발행가로 즉시 체결, 발행잔량 차감
+     예 · 주문가 < 발행가   →  거절
+
+2. 발행잔량 0 · 매칭되는 매도 주문이 있는가?
+     예                    →  학생 간 체결. 매도자 포인트 증가 · 매수자 차감
+
+3. 매칭 없음
+                           →  대기 등록. 포인트는 선차감
+```
+
+**발행잔량이 남아 있는 동안에는 학생 간 거래가 열리지 않습니다.** 학교가 먼저 다 팔고 나서 유통 시장이 열리는 구조입니다.
+
+### 트랜잭션 경계
+
+서비스 계층이 없는 구조라 DAO가 트랜잭션을 직접 잡았습니다.
+
+```java
+conn.setAutoCommit(false);
+    setStockPubBalance(conn, buyAmount, stockNo);       // 발행잔량 차감
+    setOrderRequest(conn, "매수", ..., "체결", ...);     // 주문 등록
+    setMatchedOrder(conn, ...);                          // 체결 기록
+    setStudentPointDown(conn, ...);                      // 포인트 차감
+    conn.commit();
+} catch (Exception e) {
+    conn.rollback();
+}
+```
+
+네 개의 쓰기가 하나로 묶여야 합니다. 하나라도 실패하면 포인트만 빠져나가거나 발행잔량만 줄어드는 상태가 생깁니다.
+
+### 동시 매수 방지 — `FOR UPDATE`
+
+같은 매도 주문에 두 명이 동시에 매수를 걸면 한 건이 두 번 체결될 수 있습니다. 매칭 대상 행을 잠급니다.
+
+```sql
+SELECT ... FROM (
+  SELECT ... FROM orders
+  WHERE ... AND state = '대기'
+  ORDER BY price, order_date
+) WHERE ROWNUM = 1
+FOR UPDATE
+```
+
+### 주문 상태
+
+```
+주문 등록 ──┬── 체결        발행잔량 매수 · 매칭 성사 시 즉시
+            │
+            └── 대기 ──┬── 체결    매칭 상대가 나타남
+                       └── 취소    선차감 포인트 반환
+```
+
+---
+
+## 6. 리팩토링 — JDBC → MyBatis
+
+### 6-1. 1차 스프린트의 문제
+
+트랜잭션을 DAO에서 관리하려면 `Connection`을 메서드 사이로 넘겨야 했습니다. 그런데 **같은 DAO를 팀원들이 이미 쓰고 있어** 기존 시그니처를 바꿀 수 없었습니다.
+
+기존 메서드를 두고 `Connection`을 받는 버전을 **오버로딩으로 추가**했습니다.
+
+```java
+public Map<String, Object> getStockPubInfo(int stockNo)                    // 기존 — 팀원용
+public Map<String, Object> getStockPubInfo(Connection conn, int stockNo)   // 추가 — 트랜잭션용
+```
+
+결과:
+
+```
+Connection 오버로딩   12쌍 (24개 메서드)
+StockDetailDAO       메서드 37개
+DAO 인터페이스        없음  →  상위 메서드를 만들 때마다 선언부를 찾아 스크롤
+```
+
+### 6-2. 해결 방안
+
+| 문제 | 방안 |
+|---|---|
+| 시그니처를 못 바꿈 | **DAO 인터페이스를 먼저 정의** — 계약을 고정하고 구현을 갈아끼움 |
+| `Connection`을 손으로 넘김 | **MyBatis 도입** — `SqlSession`이 트랜잭션 경계를 보유 |
+| SQL이 Java 상수에 박힘 | **Mapper XML로 분리** |
+| 커넥션 풀 없음 | **`<dataSource type="POOLED">`** |
+
+### 6-3. 클래스 구조 — 전 / 후
+
+![1차 클래스 구조](docs/diagrams/class-sprint1.png)
+
+![리팩토링 클래스 구조](docs/diagrams/class-refactor.png)
+
+*주황 = 디자인 패턴 적용 지점 · 초록 = MyBatis 전환 완료 경로*
+*실선 = 사용 · 점선 = 의존 · 속 빈 삼각형 = 인터페이스 구현*
+
+PlantUML 소스는 [`docs/diagrams/`](docs/diagrams/)에 함께 두었습니다.
+
+### 6-4. 결과
+
+| | 1차 (`sprint1-jdbc`) | 리팩토링 (`main`) |
+|---|---|---|
+| DAO 인터페이스 | 없음 | **7개** |
+| `StockDetail` 메서드 수 | **37개** | **24개** |
+| `Connection` 오버로딩 | **12쌍** | **0** |
+| 커넥션 풀 | `DriverManager` 매번 호출 | `POOLED` |
+| SQL 위치 | Java 상수 23개 | Mapper XML 7개 |
+| 테스트 | 7개 | **14개** |
+
+`StockDetailDAOInterface`에는 `Connection`이라는 단어가 **한 번도 등장하지 않습니다.**
+
+이름은 `DBCP`(Connection Pool)였지만 1차에서는 풀링이 없었습니다.
+
+```java
+public static Connection getConnection() {
+    if (dbcp == null) dbcp = new DBCP();
+    return DriverManager.getConnection(uri, ...);   // 매번 새 커넥션
+}
+```
+
+`mybatis-Config.xml`의 `<dataSource type="POOLED">`가 이 프로젝트의 첫 실제 커넥션 풀링입니다.
+
+### 6-5. 전환 현황 — 서블릿 호출부 23곳 전수
+
+```
+MyBatis  8곳 (35%)               JDBC  15곳 (65%)
+
+StockDetailDAOMybatis   6        StockDetailDAOJdbc      5
+StockListDAOMybatis     2        MemberDAOJdbc           3
+                                 CouponDAOJdbc           3
+                                 MyAssetDAOJdbc          2
+                                 NewsDAOJdbc             1
+                                 MyPointHistoryDAOJdbc   1
+```
+
+| 도메인 | 상태 |
+|---|---|
+| `StockList` | ✅ 완전 전환 |
+| `StockDetail` | 🔶 11곳 중 6곳 전환 (매수·매도 + 조회 4곳) · 5곳 미전환 |
+| `Member` `Coupon` `MyAsset` `News` `MyPointHistory` | ⬜ 구현체·테스트는 있으나 호출부 미연결 |
+
+**가장 어려운 곳부터 전환했습니다.** 트랜잭션이 걸린 매수·매도가 먼저 넘어갔습니다.
+
+---
+
+## 7. 협업 방식
+
+| | 전체 | 내 기여 |
+|---|---|---|
+| Pull Request | 47건 | **17건 (36%)** |
+| 리뷰 코멘트 | 109건 | **45건 (41%)** |
+| 커밋 (`main`) | 176건 | **77건 (44%)** |
+| 커밋 (리팩토링분) | 89건 | **51건 (57%)** |
+
+<details>
+<summary>커밋 저자가 세 개로 갈려 있습니다</summary>
+
+PC와 노트북을 오가며 `git config`가 섞였습니다.
+
+| 저자 | 커밋 | GitHub 연결 |
+|---|---|---|
+| `gitdong95 <choidongseok95@gmail.com>` | 17 | ✅ |
+| `최동석 <choidongseok95@gamil.com>` | 23 | ❌ `gmail` 오타 |
+| `ehdtm <ehdtm@D>` | 37 | ❌ `user.email` 미설정 |
+
+위 필터 링크에는 `gitdong95` 17건만 잡힙니다.
+`ehdtm`은 [PR #83](https://github.com/Inhwa1003/1st_SchoolStock/pull/83)에서 확인할 수 있습니다 —
+작성자는 `gitdong95`, 안의 커밋 26건 중 21건이 `ehdtm` 명의입니다.
+
+    git shortlog -sne main
+
+</details>
+
+| PR | 내용 | 코멘트 |
+|---|---|---|
+| [#83](https://github.com/Inhwa1003/1st_SchoolStock/pull/83) | 쿠폰 리팩토링 기능 구현 | **51건** |
+| [#87](https://github.com/Inhwa1003/1st_SchoolStock/pull/87) | 내 포인트 내역 리팩토링 | 27건 |
+| [#85](https://github.com/Inhwa1003/1st_SchoolStock/pull/85) | 멤버 리팩토링 | — |
+
+---
+
+## 8. 실행 방법
+
+**필요한 것** — JDK 8+ · Apache Tomcat · Oracle XE
+
+```bash
+git clone https://github.com/gitdong95/1st_SchoolStock.git
+```
+
+**1. DB 준비** — `db/` 의 스크립트를 순서대로 실행합니다 (Oracle XE 기준)
+
+| 순서 | 파일 | 내용 |
+|---|---|---|
+| 1 | [`db/schema.sql`](db/schema.sql) | 테이블 8개 · PK · FK |
+| 2 | [`db/sequences.sql`](db/sequences.sql) | 시퀀스 7개 |
+| 3 | [`db/data-news.sql`](db/data-news.sql) | 뉴스 더미 데이터 |
+
+> `sequences.sql` 에는 `CREATE` 와 `DROP` 이 함께 들어 있습니다. **`CREATE` 부분만 실행하세요.**
+> 팀 작업 당시 쓰던 스크립트를 그대로 옮긴 것이라 재실행용 `DROP` 이 아래에 붙어 있습니다.
+
+**2. 접속 정보 수정**
+
+| 파일 | 항목 |
+|---|---|
+| `src/com/school/stockGame/dao/jdbc/DBCP.java` | JDBC URL · 계정 |
+| `src/config/mybatis-Config.xml` | MyBatis URL · 계정 |
+
+**3. 실행** — Tomcat 배포 후 `http://localhost:5432/StockGame/`
+
+---
+
+## 9. 남은 작업
+
+**리팩토링**
+- [ ] 미연결 15곳을 MyBatis로 전환
+- [ ] `StockListDAOJdbc implements StockListDAOInterface` 선언 — `ccdce69` 일괄 rename 이후 한 번도 손대지 않아 Jdbc 7개 중 유일하게 누락
+- [ ] `StockDetail` rename 머지 사고 정리 — `implements`가 붙은 `StockDetailDAO.java`와 rename된 `StockDetailDAOJdbc.java`가 함께 남음(2줄 차이). 쓰이는 쪽에 `implements`를 옮기고 옛 파일·잔여 import 삭제
+
+**버그**
+- [ ] `StockDetailDAO.java:125` 도달 불가능한 분기 — 바깥 조건(`pubAmount >= buyAmount`)과 모순
+
+**설정**
+- [ ] DB 접속 정보를 외부 설정 파일로 분리
+
+**문서**
+- [ ] 매수/매도 시퀀스 다이어그램을 PlantUML로 재작성
