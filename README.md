@@ -130,33 +130,13 @@
 
 ![1차 아키텍처](docs/images/architecture-sprint1.png)
 
-**계층 구성**
-
-| 계층 | 구성 요소 | 역할 |
-|---|---|---|
-| **Controller** | `FrontControllerServlet` · `ActionFactory` | 모든 요청의 단일 진입점, `cmd` 기반 Action 분기 |
-| **Command** | `Action` 인터페이스 + 구현체 **23개** | 요청 하나 = 클래스 하나, `execute(req)` 단일 메서드 |
-| **Persistence** | `StockDetailDAO` 등 DAO 7개 · `DBCP` | 조회·저장 + 트랜잭션 경계까지 담당 (Service 계층 없음) |
-| **Model** | VO **8개** · `query` SQL 상수 **7개** | 테이블 매핑 객체 · SQL 분리 |
-| **View** | JSP **13개** · Gson | 서버 렌더링 · Ajax 응답 JSON 직렬화 |
-
-**적용한 디자인 패턴**
-
-| 패턴 | 적용 위치 | 역할 |
-|---|---|---|
-| **Command** | `Action` 인터페이스 + 구현체 **23개** | 요청 하나 = 클래스 하나 |
-| **Factory** | `ActionFactory` | `cmd` 파라미터로 실행할 `Action`을 생성. 분기 23건이 이 한 곳에 모임 |
-| **Singleton** | `DBCP` | 커넥션 획득 지점을 하나로 고정 |
-
-**요청 흐름**
-
-```
-요청  →  FrontControllerServlet  →  ActionFactory  →  Action
-                                                       │
-                                                       ├─→  DAO  →  DBCP  →  Oracle
-                                                       │
-                                                       └─→  JSP (View)
-```
+| 계층 | 구성 요소 | 패턴 | 역할 |
+|---|---|---|---|
+| **Controller** | `FrontControllerServlet` · `ActionFactory` | **Factory** | 모든 요청의 단일 진입점, `cmd` 기반 Action 분기 |
+| **Command** | `Action` 인터페이스 + 구현체 **23개** | **Command** | 요청 하나 = 클래스 하나, `execute(req)` 단일 메서드 |
+| **Persistence** | DAO **7개** · `DBCP` | **Singleton** | 조회·저장 + 트랜잭션 경계까지 담당 (Service 계층 없음) |
+| **Model** | VO **8개** · `query` SQL 상수 **7개** | — | 테이블 매핑 객체 · SQL 분리 |
+| **View** | JSP **13개** · Gson | — | 서버 렌더링 · Ajax 응답 JSON 직렬화 |
 
 ### 6-2. 클래스 구조
 
@@ -183,23 +163,43 @@ sprint1-jdbc
 
 ### 6-4. 핵심 구현 — 매수 / 매도
 
-![매수 워크플로우](docs/images/buy-workflow.png)
+**매수 워크플로우**
 
-**체결 규칙 — 3단계 분기**
-
+```mermaid
+flowchart TD
+  S((" ")):::st --> R["&nbsp;&nbsp;&nbsp;매수 요청&nbsp;&nbsp;&nbsp;"]:::ac
+  R --> D1{" "}:::dc
+  D1 -->|"[보유 포인트 부족]"| X1["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E1((" ")):::en
+  D1 -->|"[보유 포인트 충분]"| D2{" "}:::dc
+  D2 -->|"[0 &lt; 발행잔량 &lt; 주문수량]"| X2["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E2((" ")):::en
+  D2 -->|"[발행잔량 &ge; 주문수량<br>주문가 &lt; 발행가]"| X3["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E3((" ")):::en
+  D2 -->|"[발행잔량 &ge; 주문수량<br>주문가 &ge; 발행가]"| X4["&nbsp;&nbsp;발행가 체결&nbsp;&nbsp;"]:::ac --> E4((" ")):::en
+  D2 -->|"[발행잔량 0<br>매칭 매도 있음]"| X5["&nbsp;&nbsp;학생 간 체결&nbsp;&nbsp;"]:::ac --> E5((" ")):::en
+  D2 -->|"[발행잔량 0<br>매칭 매도 없음]"| X6["&nbsp;&nbsp;&nbsp;대기 등록&nbsp;&nbsp;&nbsp;"]:::ac --> E6((" ")):::en
+  classDef st fill:#000000,stroke:#000000
+  classDef en fill:#000000,stroke:#000000,stroke-width:4px
+  classDef ac fill:#FAFAFA,stroke:#9E9E9E,color:#000
+  classDef dc fill:#FFFFFF,stroke:#757575,color:#000
 ```
-1. 발행잔량이 남아 있는가?
-     예 · 주문가 ≥ 발행가   →  발행가로 즉시 체결, 발행잔량 차감
-     예 · 주문가 < 발행가   →  거절
 
-2. 발행잔량 0 · 매칭되는 매도 주문이 있는가?
-     예                    →  학생 간 체결. 매도자 포인트 증가 · 매수자 차감
+**매도 워크플로우**
 
-3. 매칭 없음
-                           →  대기 등록. 포인트는 선차감
+```mermaid
+flowchart TD
+  S((" ")):::st --> R["&nbsp;&nbsp;&nbsp;매도 요청&nbsp;&nbsp;&nbsp;"]:::ac
+  R --> D1{" "}:::dc
+  D1 -->|"[발행잔량 남음]"| X1["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E1((" ")):::en
+  D1 -->|"[발행잔량 0]"| D2{" "}:::dc
+  D2 -->|"[보유 주식 부족]"| X2["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E2((" ")):::en
+  D2 -->|"[보유 주식 충분<br>매칭 매수 있음]"| X3["&nbsp;&nbsp;학생 간 체결&nbsp;&nbsp;"]:::ac --> E3((" ")):::en
+  D2 -->|"[보유 주식 충분<br>매칭 매수 없음]"| X4["&nbsp;&nbsp;&nbsp;대기 등록&nbsp;&nbsp;&nbsp;"]:::ac --> E4((" ")):::en
+  classDef st fill:#000000,stroke:#000000
+  classDef en fill:#000000,stroke:#000000,stroke-width:4px
+  classDef ac fill:#FAFAFA,stroke:#9E9E9E,color:#000
+  classDef dc fill:#FFFFFF,stroke:#757575,color:#000
 ```
 
-발행잔량이 남아 있는 동안에는 학생 간 거래가 열리지 않습니다.
+발행잔량이 남아 있는 동안에는 학생 간 거래가 열리지 않습니다. 대기 등록 시 매수는 포인트를 선차감하고, 매도는 선차감이 없습니다.
 
 **트랜잭션 경계**
 
@@ -228,15 +228,6 @@ SELECT ... FROM (
   ORDER BY price, order_date
 ) WHERE ROWNUM = 1
 FOR UPDATE
-```
-
-**주문 상태**
-
-```
-주문 등록 ──┬── 체결        발행잔량 매수 · 매칭 성사 시 즉시
-            │
-            └── 대기 ──┬── 체결    매칭 상대가 나타남
-                       └── 취소    선차감 포인트 반환
 ```
 
 ### 6-5. 남은 문제
@@ -335,20 +326,18 @@ PlantUML 소스 — [`docs/diagrams/`](docs/diagrams/)
 main
 ├── src/
 │   ├── com/school/stockGame/
-│   │   ├── servlet/       FrontControllerServlet · ActionFactory · Action 구현체 23개
+│   │   ├── servlet/
 │   │   ├── dao/           DAO 인터페이스 7개
 │   │   │   ├── jdbc/      JDBC 구현체 · DBCP
 │   │   │   └── mybatis/   MyBatis 구현체 · DBCPMybatis
-│   │   ├── query/         SQL 상수 7개 (JDBC 경로)
-│   │   └── vo/            VO 8개
+│   │   ├── query/
+│   │   └── vo/
 │   ├── config/            mybatis-Config.xml · Mapper XML 7개
-│   └── test/              DAO 단위 테스트 14개
-├── WebContent/
-│   ├── view/              JSP 13개
-│   ├── css/ · js/         스타일 10 · 스크립트 6
-│   └── WEB-INF/lib/       gson · jstl · mybatis · ojdbc5
-├── db/                    schema · sequences · data · data-news
-└── docs/                  images · diagrams
+│   └── test/              DAO 단위 테스트 14개 (JDBC 7 + MyBatis 7)
+└── WebContent/
+    ├── view/
+    ├── css/ · js/
+    └── WEB-INF/lib/       + mybatis
 ```
 
 ### 7-5. 결과
