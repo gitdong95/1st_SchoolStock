@@ -165,39 +165,13 @@ sprint1-jdbc
 
 **매수 워크플로우**
 
-```mermaid
-flowchart TD
-  S((" ")):::st --> R["&nbsp;&nbsp;&nbsp;매수 요청&nbsp;&nbsp;&nbsp;"]:::ac
-  R --> D1{" "}:::dc
-  D1 -->|"[보유 포인트 부족]"| X1["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E1((" ")):::en
-  D1 -->|"[보유 포인트 충분]"| D2{" "}:::dc
-  D2 -->|"[0 &lt; 발행잔량 &lt; 주문수량]"| X2["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E2((" ")):::en
-  D2 -->|"[발행잔량 &ge; 주문수량<br>주문가 &lt; 발행가]"| X3["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E3((" ")):::en
-  D2 -->|"[발행잔량 &ge; 주문수량<br>주문가 &ge; 발행가]"| X4["&nbsp;&nbsp;발행가 체결&nbsp;&nbsp;"]:::ac --> E4((" ")):::en
-  D2 -->|"[발행잔량 0<br>매칭 매도 있음]"| X5["&nbsp;&nbsp;학생 간 체결&nbsp;&nbsp;"]:::ac --> E5((" ")):::en
-  D2 -->|"[발행잔량 0<br>매칭 매도 없음]"| X6["&nbsp;&nbsp;&nbsp;대기 등록&nbsp;&nbsp;&nbsp;"]:::ac --> E6((" ")):::en
-  classDef st fill:#000000,stroke:#000000
-  classDef en fill:#000000,stroke:#000000,stroke-width:4px
-  classDef ac fill:#FAFAFA,stroke:#9E9E9E,color:#000
-  classDef dc fill:#FFFFFF,stroke:#757575,color:#000
-```
+![매수 워크플로우](docs/images/buy-workflow.png)
 
 **매도 워크플로우**
 
-```mermaid
-flowchart TD
-  S((" ")):::st --> R["&nbsp;&nbsp;&nbsp;매도 요청&nbsp;&nbsp;&nbsp;"]:::ac
-  R --> D1{" "}:::dc
-  D1 -->|"[발행잔량 남음]"| X1["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E1((" ")):::en
-  D1 -->|"[발행잔량 0]"| D2{" "}:::dc
-  D2 -->|"[보유 주식 부족]"| X2["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E2((" ")):::en
-  D2 -->|"[보유 주식 충분<br>매칭 매수 있음]"| X3["&nbsp;&nbsp;학생 간 체결&nbsp;&nbsp;"]:::ac --> E3((" ")):::en
-  D2 -->|"[보유 주식 충분<br>매칭 매수 없음]"| X4["&nbsp;&nbsp;&nbsp;대기 등록&nbsp;&nbsp;&nbsp;"]:::ac --> E4((" ")):::en
-  classDef st fill:#000000,stroke:#000000
-  classDef en fill:#000000,stroke:#000000,stroke-width:4px
-  classDef ac fill:#FAFAFA,stroke:#9E9E9E,color:#000
-  classDef dc fill:#FFFFFF,stroke:#757575,color:#000
-```
+![매도 워크플로우](docs/images/sell-workflow.png)
+
+Mermaid 소스 — [`docs/diagrams/`](docs/diagrams/)
 
 발행잔량이 남아 있는 동안에는 학생 간 거래가 열리지 않습니다. 대기 등록 시 매수는 포인트를 선차감하고, 매도는 선차감이 없습니다.
 

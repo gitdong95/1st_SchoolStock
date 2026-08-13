@@ -1,0 +1,12 @@
+flowchart TD
+  S((" ")):::st --> R["&nbsp;&nbsp;&nbsp;매도 요청&nbsp;&nbsp;&nbsp;"]:::ac
+  R --> D1{" "}:::dc
+  D1 -->|"[발행잔량 남음]"| X1["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E1((" ")):::en
+  D1 -->|"[발행잔량 0]"| D2{" "}:::dc
+  D2 -->|"[보유 주식 부족]"| X2["&nbsp;&nbsp;&nbsp;주문 거절&nbsp;&nbsp;&nbsp;"]:::ac --> E2((" ")):::en
+  D2 -->|"[보유 주식 충분<br>매칭 매수 있음]"| X3["&nbsp;&nbsp;학생 간 체결&nbsp;&nbsp;"]:::ac --> E3((" ")):::en
+  D2 -->|"[보유 주식 충분<br>매칭 매수 없음]"| X4["&nbsp;&nbsp;&nbsp;대기 등록&nbsp;&nbsp;&nbsp;"]:::ac --> E4((" ")):::en
+  classDef st fill:#000000,stroke:#000000
+  classDef en fill:#000000,stroke:#000000,stroke-width:4px
+  classDef ac fill:#FAFAFA,stroke:#9E9E9E,color:#000
+  classDef dc fill:#FFFFFF,stroke:#757575,color:#000
