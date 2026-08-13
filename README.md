@@ -9,7 +9,7 @@
 ![Oracle](https://img.shields.io/badge/Oracle_XE-F80000?style=flat-square&logo=oracle&logoColor=white)
 ![MyBatis](https://img.shields.io/badge/MyBatis-3.2.3-000000?style=flat-square)
 ![Tomcat](https://img.shields.io/badge/Tomcat-F8DC75?style=flat-square&logo=apachetomcat&logoColor=black)
-![jQuery](https://img.shields.io/badge/jQuery-3.7.1-0769AD?style=flat-square&logo=jquery&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
 ![JUnit](https://img.shields.io/badge/JUnit-4-25A162?style=flat-square)
 
@@ -356,6 +356,10 @@ git clone https://github.com/gitdong95/1st_SchoolStock.git
 
 **설정**
 - [ ] DB 접속 정보를 외부 설정 파일로 분리
+
+**UI**
+- [ ] 자체 CSS 10개를 Bootstrap 그리드·컴포넌트로 대체 — 현재는 Bootstrap을 불러만 두고 레이아웃은 직접 작성
+- [ ] jQuery 의존 제거 — Bootstrap 5는 jQuery를 요구하지 않음
 
 **문서**
 - [ ] 매수/매도 시퀀스 다이어그램을 PlantUML로 재작성
