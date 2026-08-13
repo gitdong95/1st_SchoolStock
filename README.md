@@ -9,9 +9,9 @@
 ![Oracle](https://img.shields.io/badge/Oracle_XE-F80000?style=flat-square&logo=oracle&logoColor=white)
 ![MyBatis](https://img.shields.io/badge/MyBatis-3.2.3-000000?style=flat-square)
 ![Tomcat](https://img.shields.io/badge/Tomcat-F8DC75?style=flat-square&logo=apachetomcat&logoColor=black)
-![jQuery](https://img.shields.io/badge/jQuery-0769AD?style=flat-square&logo=jquery&logoColor=white)
+![jQuery](https://img.shields.io/badge/jQuery-3.7.1-0769AD?style=flat-square&logo=jquery&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
-![JUnit](https://img.shields.io/badge/JUnit-25A162?style=flat-square&logo=junit5&logoColor=white)
+![JUnit](https://img.shields.io/badge/JUnit-4-25A162?style=flat-square)
 
 > 팀 프로젝트의 포크입니다.
 > 원본 · [Inhwa1003/1st_SchoolStock](https://github.com/Inhwa1003/1st_SchoolStock)
@@ -21,23 +21,23 @@
 
 *주식 상세 — 호가(등록된 주문 현황) · 내 주문 관리 · 매수/매도 요청*
 
-| 브랜치 | 내용 | 커밋 |
-|---|---|---|
-| [`sprint1-jdbc`](../../tree/sprint1-jdbc) | 1차 스프린트 완성본 · 순수 JDBC | 87 |
-| [`main`](../../tree/main) | 리팩토링 완료본 · MyBatis 전환 | 176 |
+| 브랜치 | 내용 |
+|---|---|
+| [`sprint1-jdbc`](../../tree/sprint1-jdbc) | 1차 스프린트 완성본 · 순수 JDBC |
+| [`main`](../../tree/main) | 리팩토링 완료본 · MyBatis 전환 |
 
 ---
 
 ## 1. 프로젝트 개요
 
-| | |
+| 구분 | 내용 |
 |---|---|
 | 1차 스프린트 | 2026-04-13 ~ 05-04 · 4명 |
 | 리팩토링 | 2026-05-04 ~ 05-24 · 3명 |
 | 내 담당 | 주식 상세 — 매수·매도 체결, 주문 상태 관리 |
 
-학교가 학생에게 포인트를 지급하고, 학생은 그 포인트로 모의 주식을 거래합니다.
-선생님은 주식을 발행·관리하고 학생 자산을 조회합니다.
+선생님이 학생에게 포인트를 지급하고 주식을 발행·관리하면,
+학생은 그 포인트로 모의 주식을 거래합니다.
 
 ---
 
@@ -57,11 +57,9 @@
 
 ---
 
-## 3. 아키텍처 — 프레임워크 없는 MVC2
+## 3. 아키텍처 — MVC Model 2 + 디자인 패턴
 
 ![아키텍처](docs/images/architecture-sprint1.png)
-
-Spring 없이 Servlet API만으로 Model 2 구조를 세우고, 디자인 패턴 셋을 적용했습니다.
 
 | 패턴 | 적용 위치 | 역할 |
 |---|---|---|
@@ -70,18 +68,18 @@ Spring 없이 Servlet API만으로 Model 2 구조를 세우고, 디자인 패턴
 | **Singleton** | `DBCP` · `DBCPMybatis` | 커넥션 획득 지점을 하나로 고정 |
 
 ```
-요청  →  FrontControllerServlet  →  ActionFactory  →  Action 23개 중 하나
-                                                          │
-                                                          ├─→  DAO  →  DBCP  →  Oracle
-                                                          │
-                                                          └─→  JSP (View)
+요청  →  FrontControllerServlet  →  ActionFactory  →  Action
+                                                       │
+                                                       ├─→  DAO  →  DBCP  →  Oracle
+                                                       │
+                                                       └─→  JSP (View)
 ```
 
-**서블릿을 기능마다 만들지 않았습니다.** 진입점은 `FrontControllerServlet` 하나이고, 무엇을 실행할지는 `ActionFactory`가 정합니다. 기능을 추가할 때 손대는 곳은 `Action` 구현체 하나와 `ActionFactory`의 `case` 한 줄뿐입니다.
+진입점은 `FrontControllerServlet` 하나. 기능을 추가할 때 손대는 곳은 `Action` 구현체 하나와 `ActionFactory`의 `case` 한 줄뿐입니다.
 
 ---
 
-## 4. 데이터 모델
+## 4. ERD
 
 ![ERD](docs/images/erd.png)
 
@@ -95,7 +93,7 @@ Spring 없이 Servlet API만으로 Model 2 구조를 세우고, 디자인 패턴
 | `news` | 종목 뉴스 |
 | `get_point` | 포인트 지급 내역 |
 
-`orders`는 **주문 요청**, `transaction`은 **체결된 거래**입니다. 주문이 반드시 체결되는 것이 아니어서 분리했습니다.
+주문이 반드시 체결되지는 않아 **주문 요청**(`orders`)과 **체결된 거래**(`transaction`)를 분리했습니다.
 
 ---
 
@@ -117,7 +115,7 @@ Spring 없이 Servlet API만으로 Model 2 구조를 세우고, 디자인 패턴
                            →  대기 등록. 포인트는 선차감
 ```
 
-**발행잔량이 남아 있는 동안에는 학생 간 거래가 열리지 않습니다.** 학교가 먼저 다 팔고 나서 유통 시장이 열리는 구조입니다.
+**발행잔량이 남아 있는 동안에는 학생 간 거래가 열리지 않습니다.**
 
 ### 트랜잭션 경계
 
@@ -135,7 +133,7 @@ conn.setAutoCommit(false);
 }
 ```
 
-네 개의 쓰기가 하나로 묶여야 합니다. 하나라도 실패하면 포인트만 빠져나가거나 발행잔량만 줄어드는 상태가 생깁니다.
+쓰기 네 개가 하나로 묶여야 합니다. 하나라도 실패하면 포인트만 빠져나가거나 발행잔량만 줄어듭니다.
 
 ### 동시 매수 방지 — `FOR UPDATE`
 
@@ -165,31 +163,66 @@ FOR UPDATE
 
 ### 6-1. 1차 스프린트의 문제
 
-트랜잭션을 DAO에서 관리하려면 `Connection`을 메서드 사이로 넘겨야 했습니다. 그런데 **같은 DAO를 팀원들이 이미 쓰고 있어** 기존 시그니처를 바꿀 수 없었습니다.
+#### ① 자원 관리가 코드를 지배했다
 
-기존 메서드를 두고 `Connection`을 받는 버전을 **오버로딩으로 추가**했습니다.
+메서드마다 `Connection` · `PreparedStatement` · `ResultSet` 셋을 열고 닫았습니다. SQL은 두 줄, 나머지는 전부 뒤처리입니다.
+
+```java
+public int getStockPrice(int stockNo) {
+    Connection conn = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+    int price = 0;
+    try {
+        conn = DBCP.getConnection();
+        stmt = conn.prepareStatement(StockDetailQuery.STOCK_PRICE_SQL);   // ← 여기가
+        stmt.setInt(1, stockNo);
+        rs = stmt.executeQuery();                                          // ← 본론
+        if (rs.next()) price = rs.getInt(1);
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        if (rs   != null) try { rs.close();   } catch (SQLException ignore) {}
+        if (stmt != null) try { stmt.close(); } catch (SQLException ignore) {}
+        if (conn != null) try { conn.close(); } catch (SQLException ignore) {}
+    }
+    return price;
+}
+```
+
+이 패턴이 **DAO 7개 · 메서드 62개**에 반복됐습니다. `close()` 호출만 **133회**. 빠뜨린 곳도 생겼습니다.
+
+| DAO | 메서드 | `finally` | `close()` |
+|---|---|---|---|
+| `StockDetailDAO` | 37 | 37 | 79 |
+| `MemberDAO` | 4 | **0** | 8 |
+| `NewsDAO` | 2 | **0** | 3 |
+
+`MemberDAO` · `NewsDAO`는 `try` 블록 안에서만 닫습니다. **예외가 나면 커넥션이 그대로 남습니다.**
+
+#### ② DAO 인터페이스가 없었다
+
+구현 클래스에 직접 의존했습니다. 메서드 선언부를 찾아 스크롤해야 했고, 구현을 갈아끼울 자리가 없었습니다.
+
+#### ③ DAO가 트랜잭션까지 떠안았다
+
+서비스 계층이 없어 트랜잭션 경계를 DAO가 직접 잡았습니다. 그러려면 `Connection`을 메서드 사이로 넘겨야 하는데, **같은 DAO를 팀원들이 이미 쓰고 있어** 기존 시그니처를 바꿀 수 없었습니다.
 
 ```java
 public Map<String, Object> getStockPubInfo(int stockNo)                    // 기존 — 팀원용
 public Map<String, Object> getStockPubInfo(Connection conn, int stockNo)   // 추가 — 트랜잭션용
 ```
 
-결과:
-
-```
-Connection 오버로딩   12쌍 (24개 메서드)
-StockDetailDAO       메서드 37개
-DAO 인터페이스        없음  →  상위 메서드를 만들 때마다 선언부를 찾아 스크롤
-```
+이런 쌍이 **12쌍**. `StockDetailDAO`는 메서드 **37개**가 됐습니다. 조회·저장에 트랜잭션 제어까지 한 클래스가 떠안았습니다.
 
 ### 6-2. 해결 방안
 
 | 문제 | 방안 |
 |---|---|
-| 시그니처를 못 바꿈 | **DAO 인터페이스를 먼저 정의** — 계약을 고정하고 구현을 갈아끼움 |
-| `Connection`을 손으로 넘김 | **MyBatis 도입** — `SqlSession`이 트랜잭션 경계를 보유 |
+| ① 자원 관리 반복 | **MyBatis 도입** — `SqlSession`이 열고 닫기를 대신함 |
+| ② 인터페이스 부재 | **DAO 인터페이스를 먼저 정의** — 계약을 고정하고 구현을 갈아끼움 |
+| ③ DAO의 역할 과다 | `SqlSession`이 트랜잭션 경계를 쥐어 **`Connection` 오버로딩이 필요 없어짐** |
 | SQL이 Java 상수에 박힘 | **Mapper XML로 분리** |
-| 커넥션 풀 없음 | **`<dataSource type="POOLED">`** |
 
 ### 6-3. 클래스 구조 — 전 / 후
 
@@ -200,7 +233,7 @@ DAO 인터페이스        없음  →  상위 메서드를 만들 때마다 선
 *주황 = 디자인 패턴 적용 지점 · 초록 = MyBatis 전환 완료 경로*
 *실선 = 사용 · 점선 = 의존 · 속 빈 삼각형 = 인터페이스 구현*
 
-PlantUML 소스는 [`docs/diagrams/`](docs/diagrams/)에 함께 두었습니다.
+PlantUML 소스 — [`docs/diagrams/`](docs/diagrams/)
 
 ### 6-4. 결과
 
@@ -209,22 +242,10 @@ PlantUML 소스는 [`docs/diagrams/`](docs/diagrams/)에 함께 두었습니다.
 | DAO 인터페이스 | 없음 | **7개** |
 | `StockDetail` 메서드 수 | **37개** | **24개** |
 | `Connection` 오버로딩 | **12쌍** | **0** |
-| 커넥션 풀 | `DriverManager` 매번 호출 | `POOLED` |
 | SQL 위치 | Java 상수 23개 | Mapper XML 7개 |
-| 테스트 | 7개 | **14개** |
+| DAO 단위 테스트 | 7개 (JDBC) | **14개** (JDBC 7 + MyBatis 7) |
 
-`StockDetailDAOInterface`에는 `Connection`이라는 단어가 **한 번도 등장하지 않습니다.**
-
-이름은 `DBCP`(Connection Pool)였지만 1차에서는 풀링이 없었습니다.
-
-```java
-public static Connection getConnection() {
-    if (dbcp == null) dbcp = new DBCP();
-    return DriverManager.getConnection(uri, ...);   // 매번 새 커넥션
-}
-```
-
-`mybatis-Config.xml`의 `<dataSource type="POOLED">`가 이 프로젝트의 첫 실제 커넥션 풀링입니다.
+`StockDetailDAOInterface`에는 `Connection`이 **한 번도 등장하지 않습니다.**
 
 ### 6-5. 전환 현황 — 서블릿 호출부 23곳 전수
 
@@ -245,7 +266,7 @@ StockListDAOMybatis     2        MemberDAOJdbc           3
 | `StockDetail` | 🔶 11곳 중 6곳 전환 (매수·매도 + 조회 4곳) · 5곳 미전환 |
 | `Member` `Coupon` `MyAsset` `News` `MyPointHistory` | ⬜ 구현체·테스트는 있으나 호출부 미연결 |
 
-**가장 어려운 곳부터 전환했습니다.** 트랜잭션이 걸린 매수·매도가 먼저 넘어갔습니다.
+트랜잭션이 걸린 매수·매도부터 전환했습니다.
 
 ---
 
